@@ -1,7 +1,7 @@
 #      _      __ _      __
 #     | | /| / /| | /| / /      GREEN ANALYTICAL INDEX GENERATOR
 #     | |/ |/ / | |/ |/ /       W.Wojnowski 2020
-#     |__/|__/  |__/|__/        v.0.1.3
+#     |__/|__/  |__/|__/        v.0.3 (alpha)
 #
 #
 
@@ -11,10 +11,34 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.colors import LinearSegmentedColormap
 from tkinter import ttk
 from tkinter import filedialog
-from functools import partial
 import tkinter.messagebox
 import webbrowser
 from math import log
+from fpdf import FPDF
+import os
+from datetime import datetime
+
+#***************** SPLASH SCREEN *******************************
+
+root = Tk()
+
+# show no frame
+root.overrideredirect(True)
+width = root.winfo_screenwidth()
+height = root.winfo_screenheight()
+root.geometry('%dx%d+%d+%d' % (width*0.5, height*0.5, width*0.1, height*0.1))
+image_file = "zaprawa_klejowa.gif"
+#assert os.path.exists(image_file)
+# use Tkinter's PhotoImage for .gif files
+image = PhotoImage(file=image_file)
+canvas = Canvas(root, height=height*0.5, width=width*0.5, bg="black")
+canvas.create_image(width*0.5/2, height*0.5/2, image=image)
+canvas.pack()
+# show the splash screen for 5000 milliseconds then destroy
+root.after(5000, root.destroy)
+root.mainloop()
+
+# **************** MAIN PROGRAM *******************************
 
 root = Tk()
 
@@ -40,22 +64,21 @@ def clearFrame(frame):
 
 # Image save dialog:
 def saveImage():
-    ftypes = [('PNG file', '.png'), ('JPG file', '.jpg'), ('All files', '*')]
+    ftypes = [('PNG file', '.png'), ('All files', '*')] #, ('JPG file', '.jpg') - seems that .jpg is not supported by some module
     filename = filedialog.asksaveasfilename(filetypes=ftypes, defaultextension='.png')
-    plt.savefig(filename,
-                bbox_inches='tight')  # save the plot in the specified path; the 'tight' option removes the whitespace from around the figure
+    # save the plot in the specified path; the 'tight' option removes the whitespace from around the figure:
+    plt.savefig(filename, bbox_inches='tight')
 
 
 # temporary placeholder function:
 def doNothing():
     print("ok ok I won't...")
 
-
+# create the popup window with some additional information:
 def popup_bonus():
     win = Toplevel()
     win.wm_title("About Green Index")
-
-    # win.iconbitmap('PG_favicon.ico')
+    win.iconbitmap('PG_favicon.ico')
 
     def callback(event):
         webbrowser.open_new(event.widget.cget("text"))
@@ -67,8 +90,7 @@ def popup_bonus():
     popup_label2.grid(row=1, column=0, padx=8, pady=8)
     popup_label2.bind('<Button-1>', callback)
 
-    popup_label3 = Label(win,
-                         text='Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus convallis non sem ut aliquet. Praesent tempus fringilla suscipit. Phasellus tellus massa, semper et bibendum quis, rhoncus id neque. Sed euismod consectetur elit id tristique. Sed eu nibh id ante malesuada condimentum. Phasellus luctus finibus luctus. Pellentesque mi tellus, condimentum sit amet porta sit amet, ullamcorper quis elit. Pellentesque eu mollis nulla. Quisque vulputate, sem at iaculis vehicula, dui orci aliquet lectus, in facilisis odio dolor ut leo. Vivamus convallis hendrerit est luctus ornare. Nullam augue nisi, aliquam sit amet scelerisque hendrerit, pretium vel dui. Pellentesque sed tortor mollis, imperdiet quam quis, scelerisque erat. Vestibulum quis mollis dolor.',
+    popup_label3 = Label(win, text='Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus convallis non sem ut aliquet. Praesent tempus fringilla suscipit. Phasellus tellus massa, semper et bibendum quis, rhoncus id neque. Sed euismod consectetur elit id tristique. Sed eu nibh id ante malesuada condimentum. Phasellus luctus finibus luctus. Pellentesque mi tellus, condimentum sit amet porta sit amet, ullamcorper quis elit. Pellentesque eu mollis nulla. Quisque vulputate, sem at iaculis vehicula, dui orci aliquet lectus, in facilisis odio dolor ut leo. Vivamus convallis hendrerit est luctus ornare. Nullam augue nisi, aliquam sit amet scelerisque hendrerit, pretium vel dui. Pellentesque sed tortor mollis, imperdiet quam quis, scelerisque erat. Vestibulum quis mollis dolor.',
                          wraplength=300, justify=LEFT, bg='white')
     popup_label3.grid(row=2, column=0, padx=8, pady=8)
 
@@ -76,12 +98,53 @@ def popup_bonus():
     popup_button.grid(row=3, column=0, padx=8, pady=8)
 
 
+# connect a float in range 0.0 : 1.0 to a colour in a spectrum from red to yellow to green (256 discrete colour values):
 def colorMapper(value):
     cmap = LinearSegmentedColormap.from_list('rg', ["red", "yellow", "green"], N=256)
     mapped_color = int(value * 255)
     color = cmap(mapped_color)
     return color
 
+# function for refreshing the canvas:
+def destroyCanvas(canvas):
+    canvas.destroy()
+
+# the final score variable:
+entry_text = StringVar()
+
+
+def printScore():
+    try:
+        global score
+        score = (var_1 * weight_1.get()
+                 + var_2 * weight_2.get()
+                 + var_3 * weight_3.get()
+                 + var_4 * weight_4.get()
+                 + var_5 * weight_5.get()
+                 + var_6 * weight_6.get()
+                 + var_7 * weight_7.get()
+                 + var_8 * weight_8.get()
+                 + var_9 * weight_9.get()
+                 + var_10 * weight_10.get()
+                 + var_11 * weight_11.get()
+                 + var_12 * weight_12.get())/(weight_1.get() + weight_2.get() + weight_3.get() + weight_4.get() + weight_5.get() +
+                                                                                                             weight_6.get() + weight_7.get() +
+                 weight_8.get() + weight_9.get() + weight_10.get() + weight_11.get() + weight_12.get())
+
+        # set the final score as a text string rounded to 2 decimals:
+        entry_text.set(str(round(score, 2)))
+
+        print(' \n Total score: %s, rounded: %s' % (str(score), str(round(score, 2))))
+        print('Criteria scores:')
+    except NameError:
+        tkinter.messagebox.showerror(title='Name Error', message='Please set all 12 variables.')
+
+
+# a function to refresh the chart:
+def chartPlotter(event=None):
+    printScore(), clearFrame(rightFrame), pieChart(), print_variables()
+
+# interface for assigning custom weights to the 12 variables:
 def weightChoice(row, column, tab, weightVar):
 
     chckbxVar = StringVar()
@@ -105,15 +168,14 @@ def weightChoice(row, column, tab, weightVar):
     radio_4.config(state = DISABLED)
 
     def printRadioVar():
-        print(radioVar.get())
         weightVar.set(radioVar.get())
+        chartPlotter()
 
     weight_button = ttk.Button(tab, text='Set weight', command=printRadioVar)
     weight_button.grid(row=row + 1, column=column, sticky='sw', padx=(190, 0))
     weight_button.config(state = DISABLED)
 
     def printCheckbox():
-        print(chckbxVar.get())
         radios = (radio_1, radio_2, radio_3, radio_4)
         if chckbxVar.get() == 'disabled':
             radioVar.set(1)
@@ -122,7 +184,8 @@ def weightChoice(row, column, tab, weightVar):
             radio.config(state = DISABLED if chckbxVar.get() == 'disabled' else NORMAL)
         weight_button.config(state = DISABLED if chckbxVar.get() == 'disabled' else NORMAL)
 
-    ttk.Checkbutton(tab, text='Modify default weights', command=lambda:[printCheckbox()], variable=chckbxVar, onvalue='enabled', offvalue='disabled').grid(row=row, column=column,
+
+    ttk.Checkbutton(tab, text='Modify default weights', command=lambda: [printCheckbox()], variable=chckbxVar, onvalue='enabled', offvalue='disabled').grid(row=row, column=column,
                                                                                                                                                             columnspan=4, sticky='w', padx=8,
                                                                                                                                                            pady=(60, 0))
     Label(tab, text='Weight: ').grid(row=row + 1, column = column, sticky='sw', padx=8)
@@ -142,20 +205,27 @@ editMenu = Menu(menu)
 
 # add drop-down functionality:
 menu.add_cascade(label='File', menu=FileMenu)
-FileMenu.add_command(label='Save image', command=saveImage)
-FileMenu.add_command(label='Generate report', command=doNothing)
-FileMenu.add_separator()
 FileMenu.add_command(label='Info', command=popup_bonus)
 FileMenu.add_separator()
-FileMenu.add_command(label='Exit', command=doNothing)
+FileMenu.add_command(label='Save image', command=saveImage)
 
-menu.add_cascade(label='Edit', menu=editMenu)
-editMenu.add_command(label='Redo', command=doNothing)
+# FileMenu.add_command(label='Exit', command=doNothing)
+
+# menu.add_cascade(label='Edit', menu=editMenu)
+# editMenu.add_command(label='Redo', command=doNothing)
 
 # ******** Statusbar *************
-status_text = 'Temporary status text'
-status = Label(root, text=status_text, bd=1, relief=SUNKEN, anchor=W)
+def createStatusBar():
+    status = ttk.Label(root, textvariable=status_string, bd=1, relief=SUNKEN, anchor=W)
+    status.pack(side=BOTTOM, fill=X)
+
+status_string = StringVar()
+# status_string.trace('w', createStatusBar)
+status_string.set('test test')
+status = ttk.Label(root, textvariable=status_string, borderwidth=1, relief=SUNKEN, anchor=W)
 status.pack(side=BOTTOM, fill=X)
+# status = Label(root, text=status_string.get(), bd=1, relief=SUNKEN, anchor=W)
+# status.pack(side=BOTTOM, fill=X)
 
 # ******** Two separate frames ******
 leftFrame = Frame(root, bd=1, width=300, height=450)
@@ -165,10 +235,6 @@ bottomFrame = Frame(root, bd=1)
 leftFrame.pack(side=LEFT, anchor=N)
 rightFrame.pack(side=RIGHT)
 bottomFrame.pack(side=BOTTOM, anchor=W)
-
-
-def destroyCanvas(canvas):
-    canvas.destroy()
 
 
 # ************************* Tabs ***************************
@@ -229,17 +295,41 @@ weight_10.set(1)
 weight_11.set(1)
 weight_12.set(1)
 
-var_4 = 0.5
+# Begin with default values of variables to be able to generate the chart right away:
+var_1 = 1.0
+var_2 = 1.0
+var_3 = 1.0
+var_4 = 1.0
+var_5 = 1.0
+var_6 = 1.0
+var_7 = 1.0
+var_8 = 1.0
+var_9 = 1.0
+var_10 = 1.0
+var_11 = 1.0
+var_12 = 1.0
 
-# weights = [weight_1.get(), weight_2.get(), weight_3.get(), weight_4.get(), weight_5.get(), weight_6.get(), weight_7.get(), weight_8.get(), weight_9.get(), weight_10.get(), weight_11.get(), weight_12.get()]
-# labels = ['1', '2', '3', '4', '5', '6.', '7', '8', '9.', '10', '11', '12']
+# function for updating the status bar:
+def updateStatusBar():
+    global status_string
+    status_string.set(' scores: |  (1) %s  |  (2) %s  |  (3) %s  |  (4) %s  |  (5) %s  |  (6) %s  |  (7) %s  |  (8) %s  |  (9) %s  |  (10) %s  |  (11) %s  |  (12) %s  |'
+                      % (str(round(var_1, 2)),
+                        str(round(var_2, 2)),
+                        str(round(var_3, 2)),
+                        str(round(var_4, 2)),
+                        str(round(var_5, 2)),
+                        str(round(var_6, 2)),
+                        str(round(var_7, 2)),
+                        str(round(var_8, 2)),
+                        str(round(var_9, 2)),
+                        str(round(var_10, 2)),
+                        str(round(var_11, 2)),
+                        str(round(var_12, 2))
+                        ))
 
-# colors = []  # remember to map the colors to scores later
-# for i in range(0, 10, 1):
-#     color = colorMapper(i / 10)
-#     colors.append(color)
 
 
+# generate the pie chart (plot) with a circle decal in the middle:
 def pieChart():  #weights, labels, colors
 
     colors = [colorMapper(var_1), colorMapper(var_2), colorMapper(var_3), colorMapper(var_4), colorMapper(var_5), colorMapper(var_6), colorMapper(var_7), colorMapper(var_8), colorMapper(var_9),
@@ -247,7 +337,7 @@ def pieChart():  #weights, labels, colors
 
     weights = [weight_1.get(), weight_2.get(), weight_3.get(), weight_4.get(), weight_5.get(), weight_6.get(), weight_7.get(), weight_8.get(), weight_9.get(), weight_10.get(), weight_11.get(),
                weight_12.get()]
-    labels = ['1', '2', '3', '4', '5', '6.', '7', '8', '9.', '10', '11', '12']
+    labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
 
     index_value = float(entry_text.get())
 
@@ -255,14 +345,16 @@ def pieChart():  #weights, labels, colors
     ax.clear()
     ax.axis('equal')
     radius = 1.0
-    pie2 = ax.pie(weights, radius=radius, colors=colors, labeldistance=(radius * 0.85), labels=labels,
-                  rotatelabels=True, startangle=90, counterclock=False,
+    pie2 = ax.pie(weights, radius=radius, colors=colors, labeldistance=(radius * 0.875), labels=labels,
+                  rotatelabels=False, startangle=90, counterclock=False,
                   wedgeprops={"edgecolor": "black", 'linewidth': 1}, textprops={'fontsize': (radius * 10)})
 
     plt.setp(pie2[1], rotation_mode="anchor", ha="center", va="center")
     for tx in pie2[1]:
         rot = tx.get_rotation()
-        tx.set_rotation(rot + 90 + (1 - rot // 180) * 180)
+        tx.set_rotation(rot)
+        # if you want rotated labels:
+        # tx.set_rotation(rot+ 90 + (1 - rot // 180) * 180)
 
     circle = plt.Circle(xy=(0, 0), radius=(radius * 0.75), facecolor=colorMapper(index_value), edgecolor='black',
                         linewidth=1)
@@ -280,14 +372,13 @@ def pieChart():  #weights, labels, colors
     plot_widget = canvas.get_tk_widget()
 
     plot_widget.pack(side=TOP)
-    print(weight_12.get())
+    # print(weight_12.get())
 
 
 # **************************************
 
 # define a temporary function to test the printing of global variables:
 def print_variables():
-    #variables = (var_1, var_2, var_3, var_6)
     try:
         print ('var_1: ' + str(var_1))
         print('var_2: ' + str(var_2))
@@ -300,7 +391,8 @@ def print_variables():
         print('var_10: ' + str(var_10))
         print('var_11: ' + str(var_11))
         print('var_12: ' + str(var_12))
-        # print('W_12: ' + str(W_12))
+
+        updateStatusBar()
 
     except NameError:
         tkinter.messagebox.showerror(title='Name error',
@@ -308,7 +400,7 @@ def print_variables():
 
 
 
-
+# generate tab captions and prompt captions:
 def tab(tab_no, text1, text2):
     Label(tab_no, text=text1, wraplength=300, justify=LEFT).grid(sticky='w', row=0, column=0, padx=8, pady=8)
     Label(tab_no, text=text2, wraplength=300, justify=LEFT).grid(sticky='w', row=1, column=0, padx=8, pady=8)
@@ -348,6 +440,8 @@ def change_dropdown_1(*args):
     var_1 = var_1_text_choices[var_1_text.get()]
     print('var_1:' + str(var_1))
 
+    chartPlotter()
+
 # link function to change dropdown
 # The trace method of the StringVar allows to detect the change in the variable that activate a call to a function
 var_1_text.trace('w', change_dropdown_1)
@@ -358,16 +452,17 @@ W_1 = weightChoice(10, 0, tab1, weight_1)
 #               TAB 2
 # *****************************************************************************************************************
 
-content_2 = tab(tab2, text1='Direct analytical techniques should be applied to avoid sample treatment.',
+content_2 = tab(tab2, text1='Minimal sample size and minimal number of samples are goals.',
                 text2='Enter the amount of sample in either g or mL:')
 
 amount_var = StringVar()
 amount_var.set('input')
-sample_amount_entry = ttk.Entry(tab2, textvariable=amount_var, width=15).grid(sticky='w', row=2, column=0, padx=8, pady=8)
+sample_amount_entry = ttk.Entry(tab2, textvariable=amount_var, width=15)
+sample_amount_entry.grid(sticky='w', row=2, column=0, padx=8, pady=8)
 
 
-
-def change_entry_2():
+# the event=None is passed so that the entry.bind does not return a positional argument
+def change_entry_2(event=None):
     global var_2
     var_2 = None
 
@@ -383,7 +478,11 @@ def change_entry_2():
     except ValueError:
         tkinter.messagebox.showerror(title='Value error', message='The amount has to be a float or an intiger, e.g. 0.14 or 21.')
 
-# amount_var.trace('w', change_entry_2())
+    chartPlotter()
+
+# bind the <Return> key to the entry window, so that the function gets called as an alternative to the 'set' button:
+sample_amount_entry.bind('<Return>', change_entry_2)
+# insert a button that does the same:
 ttk.Button(tab2, text='Set', command=change_entry_2).grid(row=2, column=0, padx=8, pady=8)
 
 W_2 = weightChoice(10, 0, tab2, weight_2)
@@ -392,18 +491,18 @@ W_2 = weightChoice(10, 0, tab2, weight_2)
 #               TAB 3
 # *****************************************************************************************************************
 
-content_3 = tab(tab3, 'If possible, measurements should be performed in situ',
+content_3 = tab(tab3, 'If possible, measurements should be performed in situ.',
                 'What is the positioning of the analytical device?')
 
 # Create a Tkinter variable
 var_3_text = StringVar(tab3)
 # Dictionary with options
-var_3_text_choices = {'off-line': 0,
+var_3_text_choices = {'off-line': 0.0,
                       'at-line': 0.33,
                       'on-line': 0.66,
                       'in-line': 1.0}
 
-var_3_text.set('off-line')
+var_3_text.set('select')
 
 dropDown_3 = OptionMenu(tab3, var_3_text, *var_3_text_choices.keys())
 dropDown_3.config(wraplength=250, bg='white', justify=LEFT, width=40, anchor='w')
@@ -416,6 +515,7 @@ def change_dropdown_3(*args):
     var_3 = None
     var_3 = var_3_text_choices[var_3_text.get()]
     print('var_3:' + str(var_3))
+    chartPlotter()
 
 # link function to change dropdown
 # The trace method of the StringVar allows to detect the change in the variable that activate a call to a function
@@ -425,7 +525,37 @@ W_3 = weightChoice(10, 0, tab3, weight_3)
 
 
 # *************************** TAB 4 ************************************************************************************
+content_4 = tab(tab4, text1='Integration of analytical processes and operations saves energy and reduces the use of reagents.',
+                text2='How many major, distinct steps are there in the sample preparation procedure? These include e.g. sonication,'
+                      ' mineralization, centrifugation, derivatization, extraction, etc.')
 
+var_4_text = StringVar(tab4)
+# Dictionary with options
+var_4_text_choices = {'3 or fewer': 1.0,
+                      '4': 0.8,
+                      '5': 0.6,
+                      '6': 0.4,
+                      '7': 0.2,
+                      '8 or more': 0.0}
+
+var_4_text.set('select')
+
+dropDown_4 = OptionMenu(tab4, var_4_text, *var_4_text_choices.keys())
+dropDown_4.config(wraplength=250, bg='white', justify=LEFT, width=40, anchor='w')
+dropDown_4.grid(sticky='w', row=2, column=0, padx=8, pady=8)
+
+
+# on change dropdown value, get the dictionary value and modify the global variable
+def change_dropdown_4(*args):
+    global var_4
+    var_4 = None
+    var_4 = var_4_text_choices[var_4_text.get()]
+    print('var_4:' + str(var_4))
+    chartPlotter()
+
+# link function to change dropdown
+# The trace method of the StringVar allows to detect the change in the variable that activate a call to a function
+var_4_text.trace('w', change_dropdown_4)
 
 W_4 = weightChoice(10, 0, tab4, weight_4)
 
@@ -447,12 +577,40 @@ dropDown_5a = OptionMenu(tab5, var_5a_text, *var_5a_text_choices.keys())
 dropDown_5a.config(wraplength=250, bg='white', justify=LEFT, width=40, anchor='w')
 dropDown_5a.grid(sticky='w', row=2, column=0, padx=8, pady=8)
 
+var_5a = DoubleVar(tab5)
+var_5a.set(1.0)
+var_5b = DoubleVar(tab5)
+var_5b.set(1.0)
+
+
+def variableFive():
+    global var_5
+    a = var_5a.get()
+    b = var_5b.get()
+    if a == 1.0 and b == 1.0:
+        var_5 = 1.0
+    elif a == 0.5 and b == 1.0:
+        var_5 = 0.75
+    elif a == 0.0 and b == 1.0:
+        var_5 = 0.5
+    elif a == 1.0 and b == 0.0:
+        var_5 = 0.5
+    elif a == 0.5 and b == 0.0:
+        var_5 = 0.25
+    elif a == 0.0 and b == 0.0:
+        var_5 = 0.0
+
+
 # on change dropdown value, get the dictionary value and modify the global variable
 def change_dropdown_5a(*args):
-    global var_5a
-    var_5a = None
-    var_5a = var_5a_text_choices[var_5a_text.get()]
+
+    var_5a.set(var_5a_text_choices[var_5a_text.get()])
     print('var_5a:' + str(var_5a))
+    variableFive()
+    # global var_5
+    # var_5 = var_5a.get() * var_5b.get()
+
+    chartPlotter()
 
 # link function to change dropdown
 # The trace method of the StringVar allows to detect the change in the variable that activate a call to a function
@@ -467,14 +625,18 @@ var_5b_text.set('select')
 dropDown_5b = OptionMenu(tab5, var_5b_text, *var_5b_text_choices.keys())
 dropDown_5b.config(wraplength=250, bg='white', justify=LEFT, width=40, anchor='w')
 dropDown_5b.grid(sticky='w', row=4, column=0, padx=8, pady=8)
+
 def change_dropdown_5b(*args):
-    global var_5b
-    var_5b = None
-    var_5b = var_5b_text_choices[var_5b_text.get()]
-    print('var_5b:' + str(var_5b))
-    global var_5
-    var_5 = var_5a * var_5b
+
+    var_5b.set(var_5b_text_choices[var_5b_text.get()])
+    # print('var_5b:' + str(var_5b))
+    # global var_5
+    # var_5 = var_5a.get() * var_5b.get()
+    variableFive()
     print('var_5:' + str(var_5))
+
+    chartPlotter()
+
 var_5b_text.trace('w', change_dropdown_5b)
 
 W_5 = weightChoice(10, 0, tab5, weight_5)
@@ -483,7 +645,7 @@ W_5 = weightChoice(10, 0, tab5, weight_5)
 # *****************************************************************************************************************
 #               TAB 6
 # *****************************************************************************************************************
-content_6 = tab(tab6, text1='Derivatization should be avoided.', text2='Select the derivatization agents used:')
+content_6 = tab(tab6, text1='Derivatization should be avoided.', text2='Select derivatization agents (if used):')
 
 # combine the selected options into a single string to produce a label caption
 def concatenate_text(list_):
@@ -501,26 +663,30 @@ def Select():
         reslist.append(entered)
         global_list.append(entered)
 
-    # for testing, remove later:
+    # update the label box with selected deriv. agents:
     print(reslist)
     print(global_list)
     v.set(concatenate_text(global_list))
 
     global var_6
-    var_6 = 0.0
+    var_6 = 1.0
 
+    # add a -0.2 penaly for using derivatization agents:
     for CAS in global_list:
-        var_6 += lbox_list[CAS]
+        var_6 = var_6 * lbox_list[CAS]
+
+    if var_6 > 0.2:
+        var_6 = var_6 - 0.2
+    else:
+        var_6 = 0.0
 
     print(var_6)
+    chartPlotter()
 
 
 # update the list box
 def update_list(*args):
     search_term = search_var.get()
-
-    # Duplicates in the list!!!
-
 
     lbox.delete(0, END)
 
@@ -530,16 +696,21 @@ def update_list(*args):
 
 
 
+
 # clear the selection and the displayed label caption
 def clear_list():
     global v, global_list
     v.set('')
+    global var_6
+    var_6 = 1.0
     global_list = []
+    chartPlotter()
 
 # create global variables
 global_list = []
-# remove duplicates!!!
-lbox_list = {"None": 1,
+# if derivatization should be avoided, then shouldn't the highest value in the case in which derivatization agents are used be lower than 1.0?
+lbox_list = {
+             # "None": 1.1,
              "5950-69-6": 1,
              "30084-90-3": 1,
              "12093-10-6": 1,
@@ -624,7 +795,6 @@ lbox_list = {"None": 1,
              "1293-79-4": 0.740506239181083,
              "28920-43-6": 0.740506239181083,
              "100-07-2": 0.740506239181083,
-             "70-11-1": 0.738962425018157,
              "99-73-0": 0.738962425018157,
              "22265-37-8": 0.737084384687495,
              "3731-51-9": 0.737084384687495,
@@ -632,7 +802,6 @@ lbox_list = {"None": 1,
              "122-04-3": 0.732376041854033,
              "4755-50-4": 0.732376041854033,
              "99-33-2": 0.732376041854033,
-             "100-11-8": 0.729578106327056,
              "605-65-2": 0.723192330411814,
              "56512-49-3": 0.723192330411814,
              "126565-42-2": 0.723192330411814,
@@ -641,7 +810,6 @@ lbox_list = {"None": 1,
              "93128-04-2": 0.717798274857161,
              "613-54-7": 0.716357636495872,
              "74367-78-5": 0.710065827927279,
-             "107474-79-3": 0.706189691216888,
              "119-26-6": 0.692633685424727,
              "2508-19-2": 0.692425832968952,
              "21614-17-5": 0.682522312223409,
@@ -664,7 +832,6 @@ lbox_list = {"None": 1,
              "504-29-0": 0.587444277328904,
              "86-84-0": 0.566544585073271,
              "36877-69-7": 0.556132009449506,
-             "108-24-7": 0.529128889489181,
              "103-71-9": 0.525453097624119,
              "551-06-4": 0.510591749035237,
              "643-79-8": 0.486298449205041,
@@ -809,6 +976,8 @@ lbox_list = {"None": 1,
              "33375-06-3": 0.116078677380125,
              }
 v = StringVar()
+chckbxVar_tab6 = StringVar()
+chckbxVar_tab6.set('disabled')
 
 # set initial blank value of the StringVar
 v.set('')
@@ -816,20 +985,39 @@ v.set('')
 search_var = StringVar()
 search_var.trace("w", update_list)
 entry = ttk.Entry(tab6, textvariable=search_var, width=13)
+# disable the lookup box initially:
+# entry.config(state=DISABLED)
+
 scrollbar = ttk.Scrollbar(tab6, orient='vertical')
-scrollbar.grid(row=3, column=2, sticky='w', ipady=30)
+scrollbar.grid(row=3, column=0, sticky='w', ipady=30, padx=(220, 0))
 lbox = Listbox(tab6, width=34, height=6, yscrollcommand=scrollbar.set)  # selectmode=MULTIPLE
+# disable the lbox initially:
+# lbox.config(state=DISABLED)
+
+# def lboxActivator():
+#
+#     # chckbxVar_tab6.set('disabled')
+#     if chckbxVar_tab6.get() == 'enabled':
+#         entry.config(state=ACTIVE)
+#         lbox.config(state=NORMAL)
+#     elif chckbxVar_tab6.get() == 'disabled':
+#         entry.config(state=DISABLED)
+#         lbox.config(state=DISABLED)
+#
+#     ttk.Checkbutton(tab6, text='Derivatisation agent is used', command=lboxActivator, variable=chckbxVar_tab6, onvalue='enabled', offvalue='disabled').grid(row=30, column=0)
+
+# lboxActivator()
 
 Label(tab6, text='CAS lookup: ').grid(row=2, column=0, padx=8, pady=3, sticky='w')
-entry.grid(row=2, column=0, padx=24, pady=3, sticky='e')
+entry.grid(row=2, column=0, padx=(100, 0), pady=3, sticky='w')
 lbox.grid(row=3, column=0, padx=8, pady=3, sticky='w')
 
 # link the scrollbar to the list box
 scrollbar.config(command=lbox.yview)
 
-ttk.Button(tab6, text="Select", command=Select, width=8).grid(column=3, row=3, padx=4)
+ttk.Button(tab6, text="Select", command=Select, width=8).grid(column=1, row=3, padx=4)
 # clear the selection and the caption
-ttk.Button(tab6, text='Clear', command=lambda:[clear_list(), update_list()], width=8).grid(column=3, row=4, padx=4)
+ttk.Button(tab6, text='Clear', command=lambda:[clear_list(), update_list()], width=8).grid(column=1, row=4, padx=4)
 
 Label(tab6, text='Selected CAS: ').grid(column=0, row=4, sticky='w', padx=8, pady=0)
 ttk.Label(tab6, textvariable=v, wraplength=180, width=34, relief='groove').grid(column=0, row=5, sticky='w', padx=8, pady=4)
@@ -843,13 +1031,13 @@ W_6 = weightChoice(10, 0, tab6, weight_6)
 #               TAB 7
 # *****************************************************************************************************************
 content_7 = tab(tab7, text1='Generation of a large volume of analytical waste should be avoided, and proper management'
-                            'of analytical waste should be provided.', text2='Enter the amount of waste in mL or g:')
+                            'of analytical waste should be provided.', text2='Enter the amount of waste in g or mL:')
 
 amount_var7 = StringVar()
 amount_var7.set('input')
-sample_amount_entry7 = ttk.Entry(tab7, textvariable=amount_var7, width=15).grid(sticky='w', row=2, column=0, padx=8, pady=8)
 
-def change_entry_7():
+# the event=None is passed so that the entry.bind does not return a positional argument
+def change_entry_7(event=None):
     global var_7
     var_7 = None
 
@@ -865,7 +1053,14 @@ def change_entry_7():
     except ValueError:
         tkinter.messagebox.showerror(title='Value error', message='The amount has to be a float or an intiger, e.g. 0.14 or 21.')
 
-# amount_var.trace('w', change_entry_7())
+    chartPlotter()
+
+sample_amount_entry7 = ttk.Entry(tab7, textvariable=amount_var7, width=15)
+sample_amount_entry7.grid(sticky='w', row=2, column=0, padx=8, pady=8)
+
+# bind the <Return> key to the entry window, so that the function gets called as an alternative to the 'set' button:
+sample_amount_entry7.bind('<Return>', change_entry_7)
+# insert a button that does the same:
 ttk.Button(tab7, text='Set', command=change_entry_7).grid(row=2, column=0, padx=8, pady=8)
 
 W_7 = weightChoice(10, 0, tab7, weight_7)
@@ -880,20 +1075,22 @@ content_8 = tab(tab8, text1='Multi-analyte or multi-parameter methods are prefer
 
 amount_var8a = StringVar()
 amount_var8a.set('input')
-sample_amount_entry8a = ttk.Entry(tab8, textvariable=amount_var8a, width=15).grid(sticky='w', row=2, column=0, padx=8, pady=8)
+sample_amount_entry8a = ttk.Entry(tab8, textvariable=amount_var8a, width=15)
+sample_amount_entry8a.grid(sticky='w', row=2, column=0, padx=8, pady=8)
 
 Label(tab8, text='Sample throughput (samples analysed per hour):', wraplength=300, justify=LEFT).grid(sticky='w', row=3, column=0, padx=8, pady=8)
 
 amount_var8b = StringVar()
 amount_var8b.set('input')
-sample_amount_entry8b = ttk.Entry(tab8, textvariable=amount_var8b, width=15).grid(sticky='w', row=4, column=0, padx=8, pady=8)
+sample_amount_entry8b = ttk.Entry(tab8, textvariable=amount_var8b, width=15)
+sample_amount_entry8b.grid(sticky='w', row=4, column=0, padx=8, pady=8)
 
-def change_entry_8():
+def change_entry_8(event=None):
     global var_8
     var_8 = None
 
     try:
-        if (float(amount_var8a.get()) * float(amount_var8b.get()) )< 1.0:
+        if (float(amount_var8a.get()) * float(amount_var8b.get())) < 1.0:
             var_8 = 0.0
         elif (float(amount_var8a.get()) * float(amount_var8b.get())) > 70.0:
             var_8 = 1.0
@@ -903,8 +1100,11 @@ def change_entry_8():
 
     except ValueError:
         tkinter.messagebox.showerror(title='Value error', message='The amount has to be a float or an intiger, e.g. 0.14 or 21.')
+    # refresh the plot:
+    chartPlotter()
 
-# amount_var.trace('w', change_entry_7())
+
+sample_amount_entry8b.bind('<Return>', change_entry_8)
 ttk.Button(tab8, text='Set', command=change_entry_8).grid(row=5, column=0, padx=8, pady=8)
 
 W_8 = weightChoice(10, 0, tab8, weight_8)
@@ -912,12 +1112,15 @@ W_8 = weightChoice(10, 0, tab8, weight_8)
 # *****************************************************************************************************************
 #               TAB 9
 # *****************************************************************************************************************
-content_9 = tab(tab9, text1='The use of energy should ba minimized',
+content_9 = tab(tab9, text1='The use of energy should be minimized.',
                       text2='Select the most energy-intensive technique used in the method:')
 
 var_9_text = StringVar(tab9)
+amount_var9 = StringVar(tab9)
+amount_var9.set('input')
 # Dictionary with options
-var_9_text_choices = { 'FTIR': 1.0,           # what about vortexing, incubation, etc.? Mineralization?
+var_9_text_choices = { 'None': 1.0,
+                       'FTIR': 1.0,           # what about vortexing, incubation, etc.? Mineralization?
                        'Immunoassay': 1.0,
                        'Spectrofluorometry': 1.0,
                        'Titration': 1.0,
@@ -925,7 +1128,7 @@ var_9_text_choices = { 'FTIR': 1.0,           # what about vortexing, incubation
                        'UV-Vis Spectrometry': 1.0,
                        'AAS': 0.5,
                        'GC': 0.5,
-                       'ICP-MS': 0.5, # naprawdę? plazma indukowana argonem i MS
+                       'ICP-MS': 0.5,
                        'LC': 0.5,
                        'NMR': 0.0,
                        'GC-MS': 0.0,
@@ -940,11 +1143,41 @@ dropDown_9.grid(sticky='w', row=2, column=0, padx=8, pady=8)
 
 def change_dropdown_9(*args):
     global var_9
-    var_9 = None
+    var_9 = 1.0
     var_9 = var_9_text_choices[var_9_text.get()]
     print('var_9:' + str(var_9))
+    chartPlotter()
 
 var_9_text.trace('w', change_dropdown_9)
+
+ttk.Label(tab9, text='Alternatively, estimate the total power consumption of a single analysis in kWh:', wraplength=250, justify=LEFT).grid(sticky='w', row=3, column=0, padx=8, pady=8)
+
+sample_amount_entry9 = ttk.Entry(tab9, textvariable=amount_var9, width=15)
+sample_amount_entry9.grid(sticky='w', row=4, column=0, padx=8, pady=8)
+
+def change_entry_9(event=None):
+    global var_9
+    var_9 = 1.0
+
+    try:
+        if float(amount_var9.get()) > 1.5:
+            var_9 = 0.0
+        elif float(amount_var9.get()) < 0.1:
+            var_9 = 1.0
+        else:
+            var_9 = abs(-0.7143 * (float(amount_var9.get())) + 1.0714)   # absolute value to avoid negative values
+        print('var_9:' + str(var_9))
+
+    except ValueError:
+        tkinter.messagebox.showerror(title='Value error', message='The amount has to be a float or an intiger, e.g. 0.14 or 21.')
+
+    chartPlotter()
+
+
+sample_amount_entry9.bind('<Return>', change_entry_9)
+ttk.Button(tab9, text='Set', command=change_entry_9).grid(row=4, column=0, padx=8, pady=8)
+
+
 
 W_9 = weightChoice(10, 0, tab9, weight_9)
 
@@ -973,6 +1206,7 @@ def change_dropdown_10(*args):
     var_10 = None
     var_10 = var_10_text_choices[var_10_text.get()]
     print('var_10:' + str(var_10))
+    chartPlotter()
 
 var_10_text.trace('w', change_dropdown_10)
 
@@ -1011,7 +1245,10 @@ def change_dropdown_11a(*args):
     var_11 = 1.0
     var_11 = var_11a_text_choices[var_11a_text.get()]
     Label(tab11, text='Amount of toxic reagents in g or mL:', wraplength=300, justify=LEFT).grid(sticky='w', row=3, column=0, padx=8, pady=8)
-    ttk.Entry(tab11, textvariable=amount_var11b, width=15, state=enabler_11b()).grid(sticky='w', row=4, column=0, padx=8, pady=8)
+    reagent_entry_11 = ttk.Entry(tab11, textvariable=amount_var11b, width=15, state=enabler_11b())
+    reagent_entry_11.grid(sticky='w', row=4, column=0, padx=8, pady=8)
+
+    reagent_entry_11.bind('<Return>', change_dropdown_11a)
     ttk.Button(tab11, text='Set', command=change_dropdown_11a).grid(row=5, column=0, padx=8, pady=8)
 
     if float(var_11a_text_choices[var_11a_text.get()]) != 1.0:
@@ -1029,6 +1266,7 @@ def change_dropdown_11a(*args):
     else:
         pass
 
+    chartPlotter()
     print(var_11)
 
 
@@ -1078,6 +1316,8 @@ def testPrint():
         var_12 = 0.0
     print ('var_12: %f' % var_12)
 
+    chartPlotter()
+
 ttk.Button(tab12, text='Set', command=testPrint).grid(row=9, column=0, padx=8, pady=8)
 
 W_12 = weightChoice(10, 0, tab12, weight_12)
@@ -1089,47 +1329,271 @@ W_12 = weightChoice(10, 0, tab12, weight_12)
 # pack the tab parent and its tabs:
 tab_parent.pack(expand=1, fill='both')
 
-# add a temporary value window for testing:
 
-# green_index = '0.50'
-entry_text = StringVar()
-# index_entry = ttk.Entry(leftFrame, textvariable=entry_text)
-# index_entry.pack(side=BOTTOM, anchor=SW)
-# entry_text.set(green_index)
-
-def printScore():
-    try:
-        global score
-        score = (var_1 * weight_1.get()
-                 + var_2 * weight_2.get()
-                 + var_3 * weight_3.get()
-                 + 0.5 * weight_4.get()
-                 + var_5 * weight_5.get()
-                 + var_6 * weight_6.get()
-                 + var_7 * weight_7.get()
-                 + var_8 * weight_8.get()
-                 + var_9 * weight_9.get()
-                 + var_10 * weight_10.get()
-                 + var_11 * weight_11.get()
-                 + var_12 * weight_12.get())/(weight_1.get() + weight_2.get() + weight_3.get() + weight_4.get() + weight_5.get() +
-                                                                                                             weight_6.get() + weight_7.get() +
-                 weight_8.get() + weight_9.get() + weight_10.get() + weight_11.get() + weight_12.get())
-
-        entry_text.set(str(score)[:4])
-        print(score)
-    except NameError:
-        tkinter.messagebox.showerror(title='Name Error', message='Please set all 12 variables.')
-
-refreshButton = ttk.Button(leftFrame, text='GENERATE LABEL',
-                           command=lambda: [printScore(),
-                                            clearFrame(rightFrame),
-                                            pieChart(), #weights, labels, colors
-                                            print_variables()
-                                            ])
-refreshButton.pack(side=BOTTOM, anchor=SW)
 
 
 # ttk.Button(leftFrame, text='Print score', command=printScore).pack(side=BOTTOM)
+
+# generate the default chart at the beginning:
+chartPlotter()
+
+############################################################################################################
+
+# generate the report in .pdf:
+def generateReport():
+
+    # connect a float in range 0.0 : 1.0 to a colour in a spectrum from red to yellow to green (256 discrete colour values):
+    def colorMapper(value):
+        cmap = LinearSegmentedColormap.from_list('rg', ["red", "yellow", "green"], N=256)
+        mapped_color = int(value * 255)
+        color = cmap(mapped_color)
+        color_255 = []
+        for band in color:
+            color_255.append(int(band * 255))
+        return tuple(color_255)
+
+    pdf = FPDF('P', 'mm', 'A4')
+    pdf.set_font('Arial', '', 10)
+    pdf.add_page()
+    pdf.set_margins(left=30, top=30)
+
+    # save a temp image to the program's location:
+    plt.savefig('temp_figure.png', bbox_inches='tight')
+    # insert image (image, x, y, width):
+    pdf.image('temp_figure.png', 107, 10, 80)
+    # delete the temp file from drive:
+    os.remove('temp_figure.png')
+
+    # insert title (Arial, 'B'old, 14 pt):
+    pdf.set_font('Arial', 'B', 14.0)
+    pdf.ln(10)
+    pdf.cell(100, 12, 'Green index report sheet')
+    pdf.set_font('Arial', '', 12)
+    pdf.ln(15)
+
+    now = datetime.now()
+    pdf.cell(100, 12, now.strftime("%d/%m/%Y %H:%M:%S"))
+
+    # Text height is the same as current font size
+    th = pdf.font_size + 2
+
+    # a function to change the colour of a field based on the value:
+    def fieldColor(score):
+        x = colorMapper(score)[0]
+        y = colorMapper(score)[1]
+        z = colorMapper(score)[2]
+        pdf.set_fill_color(x, y, z)
+
+    pdf.ln(70)
+    # populate the table
+    # Table head:
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(120, th, 'Criteria', border=0)
+    pdf.cell(15, th, 'Score', border=0)
+    pdf.cell(15, th, 'Weight', border=0)
+    pdf.set_font('Arial', '', 10)
+    pdf.ln(th)
+
+    pdf.set_fill_color(240, 240, 240)
+
+    # Rule 1
+    # Save top coordinate
+    top = pdf.y
+    # Calculate x position of next cell
+    offset = pdf.x + 120
+    pdf.multi_cell(120, th * 0.8, '1. Direct analytical techniques should be applied to avoid sample treatment.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_1)
+    pdf.cell(15, th * 1.6, str(round(var_1, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_1.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+
+    # Rule 2
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '2. Minimal sample size and minimal number of samples are goals.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_2)
+    pdf.cell(15, th * 1.6, str(round(var_2, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_2.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 3
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '3. If possible, measurements should be performed in situ.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_3)
+    pdf.cell(15, th * 1.6, str(round(var_3, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_3.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 4
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.multi_cell(120, th * 0.8, '4. Integration of analytical processes and operations saves energy and reduces the use of reagents.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_4)
+    pdf.cell(15, th * 1.6, str(round(var_4, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_4.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 5
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '5. Automated and miniaturized methods should be selected.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_5)
+    pdf.cell(15, th * 1.6, str(round(var_5, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_5.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 6
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '6. Derivatization should be avoided.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_6)
+    pdf.cell(15, th * 1.6, str(round(var_6, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_6.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 7
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.multi_cell(120, th * 0.8, '7. Generation of a large volume of analytical waste should be avoided, and proper management of analytical waste should be provided.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_7)
+    pdf.cell(15, th * 1.6, str(round(var_7, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_7.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 8
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.multi_cell(120, th * 0.8, '8. Multi-analyte or multi-parameter methods are preferred versus methods using one analyte at a time.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_8)
+    pdf.cell(15, th * 1.6, str(round(var_8, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_8.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 9
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '9. The use of energy should be minimized.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_9)
+    pdf.cell(15, th * 1.6, str(round(var_9, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_9.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 10
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '10. Reagents obtained from renewable sources should be preferred.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_10)
+    pdf.cell(15, th * 1.6, str(round(var_10, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_10.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 11
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th *1.6, '11. Toxic reagents should be eliminated or replaced.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_11)
+    pdf.cell(15, th * 1.6, str(round(var_11, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_11.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+
+    # Rule 12
+    top = pdf.y
+    offset = pdf.x + 120
+    pdf.cell(120, th * 1.6, '12. Operator\'s safety should be increased.', border=1, fill=True)
+    # Reset y coordinate
+    pdf.y = top
+    # Move to computed offset
+    pdf.x = offset
+    fieldColor(var_12)
+    pdf.cell(15, th * 1.6, str(round(var_12, 2)), border=1, fill=True, align='C')
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(15, th * 1.6, str(weight_12.get()), border=1, fill=True, align='C')
+    pdf.ln(th * 2)
+    
+    
+
+
+    # output the pdf:
+    def savePDF():
+        ftypes = [('PDF file', '.pdf'), ('All files', '*')]
+        filename = filedialog.asksaveasfilename(filetypes=ftypes, defaultextension='.pdf')
+        # save the pdf
+        pdf.output(filename, 'F')
+
+    savePDF()
+
+# add the report functionality to the file menu:
+FileMenu.add_command(label='Generate report', command=generateReport)
+FileMenu.add_separator()
+
+# add a button to refresh the chart:
+refreshButton = ttk.Button(leftFrame, text='RE-GENERATE PLOT', width=20,
+                           command=lambda: [printScore(),
+                                            clearFrame(rightFrame),
+                                            pieChart(),
+                                            print_variables()
+                                            ])
+refreshButton.pack(side=BOTTOM, anchor=SE)
+
+
+##########################################################################################################
 
 
 ##################################################################################################
